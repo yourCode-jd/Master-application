@@ -1,0 +1,2 @@
+import { EmptyState } from "@/components/ui";
+export function ActivityFeed({items}:{items:{id:string;title:string;description:string|null;type:string;occurredAt:Date;customer?:{name:string}|null}[]}){if(!items.length)return <EmptyState title="No activity yet" description="New business events will appear here."/>;return <ol className="feed">{items.map(item=><li key={item.id}><strong>{item.title}</strong><span>{item.customer?.name&&`${item.customer.name} · `}{item.description||item.type} · {item.occurredAt.toLocaleDateString()}</span></li>)}</ol>}

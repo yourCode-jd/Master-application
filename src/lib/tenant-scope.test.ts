@@ -1,0 +1,2 @@
+import { describe, expect, it } from "vitest";import { assertSameBusiness, scopedWhere } from "./tenant-scope";
+describe("tenant boundaries",()=>{it("always applies active business to a query",()=>expect(scopedWhere("business-a",{id:"customer-x"})).toEqual({id:"customer-x",businessId:"business-a"}));it("rejects cross-business access",()=>expect(()=>assertSameBusiness("business-a","business-b")).toThrow("Tenant boundary"));});

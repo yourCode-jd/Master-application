@@ -1,0 +1,2 @@
+import { db } from "@/lib/db";import { getTenantContext } from "@/lib/tenant";import { ActivityFeed } from "@/components/activity-feed";
+export default async function ActivityPage(){const c=await getTenantContext();const items=await db.activity.findMany({where:{businessId:c.businessId},include:{customer:{select:{name:true}}},orderBy:{occurredAt:"desc"},take:100});return <><div className="page-head"><div><p className="eyebrow">TIMELINE</p><h1>Activity</h1></div></div><div className="card"><ActivityFeed items={items}/></div></>}

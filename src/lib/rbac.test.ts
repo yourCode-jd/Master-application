@@ -1,0 +1,2 @@
+import { describe, expect, it } from "vitest";import { assertPermission } from "./rbac";
+describe("server permission checks",()=>{it("allows an assigned capability",()=>expect(()=>assertPermission(new Set(["customers.create"]),"customers.create")).not.toThrow());it("blocks staff from owner settings",()=>expect(()=>assertPermission(new Set(["dashboard.view"]),"settings.manage")).toThrow("Missing permission"));});

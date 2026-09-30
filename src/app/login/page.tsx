@@ -1,0 +1,4 @@
+"use client";
+import { useActionState } from "react";
+import { loginAction } from "@/app/actions";
+export default function Login(){const [state,formAction,pending]=useActionState<{error?:string},FormData>(loginAction,{});return <main className="login"><form action={formAction} className="login-card"><p className="eyebrow">LOCAL BUSINESS PLATFORM</p><h1>Welcome back</h1><p>Sign in to your operations workspace.</p><label>Email<input name="email" type="email" required defaultValue="owner@demo.local"/></label><label>Password<input name="password" type="password" required defaultValue="DemoPass123!"/></label>{state.error&&<p className="error" role="alert">{state.error}</p>}<button className="btn" disabled={pending}>{pending?"Signing in…":"Sign in"}</button><small>Demo accounts: owner, manager, or staff @demo.local</small></form></main>}

@@ -1,0 +1,282 @@
+generator client {
+provider = "prisma-client-js"
+}
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+
+enum BusinessType {
+
+SALON
+CAFE
+RETAIL
+GYM
+OTHER
+}
+enum BusinessStatus {
+ACTIVE
+INACTIVE
+}
+enum StaffStatus {
+ACTIVE
+INACTIVE
+}
+enum CustomerStatus {
+ACTIVE
+ARCHIVED
+}
+enum TaskStatus {
+OPEN
+IN_PROGRESS
+COMPLETED
+DISMISSED
+}
+enum TaskPriority {
+LOW
+NORMAL
+HIGH
+URGENT
+}
+enum StockMovementType {
+OPENING
+ADJUSTMENT
+RECEIPT
+ISSUE
+}
+
+model Business {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  type BusinessType @default(OTHER)
+  timezone String @default("Asia/Kolkata")
+  currency String @default("INR")
+  status BusinessStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  locations BusinessLocation[]
+staff StaffMember[]
+memberships UserBusinessRole[]
+customers Customer[]
+activities Activity[]
+tasks Task[]
+items Item[]
+categories ItemCategory[]
+inventoryLocations InventoryLocation[]
+suppliers Supplier[]
+stockMovements StockMovement[]
+auditLogs AuditLog[]
+}
+model BusinessLocation {
+  id String @id @default(cuid())
+businessId String
+name String
+addressLine1 String?
+addressLine2 String?
+city String?
+state String?
+postalCode String?
+country String?
+phone String?
+active Boolean @default(true)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+  business Business @relation(fields:[businessId], references:[id], onDelete: Cascade)
+  @@index([businessId])
+}
+model User {
+  id String @id @default(cuid())
+name String
+email String @unique
+passwordHash String
+active Boolean @default(true)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+  memberships UserBusinessRole[]
+staffProfiles StaffMember[]
+audits AuditLog[]
+movements StockMovement[]
+taskAssignments Task[]
+}
+model StaffMember {
+  id String @id @default(cuid())
+businessId String
+userId String?
+name String
+phone String
+email String?
+status StaffStatus @default(ACTIVE)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+  business Business @relation(fields:[businessId], references:[id], onDelete:Cascade)
+user User? @relation(fields:[userId], references:[id])
+activities Activity[]
+tasks Task[]
+  @@index([businessId])
+@@index([userId])
+}
+model Role {
+id String @id @default(cuid())
+key String @unique
+name String
+permissions RolePermission[]
+assignments UserBusinessRole[]
+}
+model Permission {
+id String @id @default(cuid())
+key String @unique
+description String
+roles RolePermission[]
+}
+model RolePermission {
+roleId String
+permissionId String
+role Role @relation(fields:[roleId],references:[id],onDelete:Cascade)
+permission Permission @relation(fields:[permissionId],references:[id],onDelete:Cascade)
+@@id([roleId, permissionId])
+}
+model UserBusinessRole {
+userId String
+businessId String
+roleId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+role Role @relation(fields:[roleId],references:[id],onDelete:Cascade)
+@@id([userId,businessId,roleId])
+@@index([businessId,userId])
+}
+model Customer {
+id String @id @default(cuid())
+businessId String
+name String
+phone String
+email String?
+notes String?
+status CustomerStatus @default(ACTIVE)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+activities Activity[]
+tasks Task[]
+@@index([businessId,name])
+@@index([businessId,phone])
+}
+model Activity {
+id String @id @default(cuid())
+businessId String
+customerId String?
+staffId String?
+type String
+title String
+description String?
+metadata Json?
+occurredAt DateTime @default(now())
+createdAt DateTime @default(now())
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+customer Customer? @relation(fields:[customerId],references:[id],onDelete:SetNull)
+staff StaffMember? @relation(fields:[staffId],references:[id],onDelete:SetNull)
+@@index([businessId,occurredAt])
+}
+model Task {
+id String @id @default(cuid())
+businessId String
+customerId String?
+assignedStaffId String?
+assignedUserId String?
+title String
+description String?
+type String @default("GENERAL")
+priority TaskPriority @default(NORMAL)
+source String @default("MANUAL")
+status TaskStatus @default(OPEN)
+dueAt DateTime?
+completedAt DateTime?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+customer Customer? @relation(fields:[customerId],references:[id],onDelete:SetNull)
+assignedStaff StaffMember? @relation(fields:[assignedStaffId],references:[id],onDelete:SetNull)
+assignedUser User? @relation(fields:[assignedUserId],references:[id],onDelete:SetNull)
+@@index([businessId,status,dueAt])
+}
+model ItemCategory {
+id String @id @default(cuid())
+businessId String
+name String
+createdAt DateTime @default(now())
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+items Item[]
+@@unique([businessId,name])
+}
+model InventoryLocation {
+id String @id @default(cuid())
+businessId String
+name String
+active Boolean @default(true)
+createdAt DateTime @default(now())
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+movements StockMovement[]
+@@unique([businessId,name])
+}
+model Item {
+id String @id @default(cuid())
+businessId String
+categoryId String?
+name String
+sku String?
+barcode String?
+unit String @default("unit")
+active Boolean @default(true)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+category ItemCategory? @relation(fields:[categoryId],references:[id],onDelete:SetNull)
+movements StockMovement[]
+@@index([businessId,name])
+@@unique([businessId,sku])
+}
+model Supplier {
+id String @id @default(cuid())
+businessId String
+name String
+phone String
+email String?
+notes String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+@@index([businessId,name])
+}
+model StockMovement {
+id String @id @default(cuid())
+businessId String
+itemId String
+locationId String
+quantityChange Decimal @db.Decimal(12,3)
+type StockMovementType
+reason String?
+staffId String?
+userId String?
+occurredAt DateTime @default(now())
+createdAt DateTime @default(now())
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+item Item @relation(fields:[itemId],references:[id],onDelete:Restrict)
+location InventoryLocation @relation(fields:[locationId],references:[id],onDelete:Restrict)
+user User? @relation(fields:[userId],references:[id],onDelete:SetNull)
+@@index([businessId,itemId,occurredAt])
+}
+model AuditLog {
+id String @id @default(cuid())
+businessId String
+actorUserId String
+action String
+entityType String
+entityId String
+before Json?
+after Json?
+createdAt DateTime @default(now())
+business Business @relation(fields:[businessId],references:[id],onDelete:Cascade)
+actor User @relation(fields:[actorUserId],references:[id],onDelete:Restrict)
+@@index([businessId,createdAt])
+}

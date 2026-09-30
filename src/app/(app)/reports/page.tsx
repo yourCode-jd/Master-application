@@ -1,0 +1,1 @@
+export default function Reports(){return <><div className="page-head"><div><p className="eyebrow">REPORTING</p><h1>Reports</h1></div></div><div className="card empty"><strong>Reports are not configured yet</strong><p>Phase 1 establishes reliable underlying data; advanced reporting is intentionally deferred.</p></div></>}
