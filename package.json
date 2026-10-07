@@ -11,7 +11,10 @@
     "test": "vitest run",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:local:start": "sh scripts/local-db-start.sh",
+    "db:local:stop": "sh scripts/local-db-stop.sh",
+    "dev:local": "sh scripts/local-db-start.sh && next dev"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

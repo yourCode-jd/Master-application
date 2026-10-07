@@ -1,0 +1,1 @@
+export default function OfflinePage() { return <main className="login"><section className="login-card"><p className="eyebrow">OFFLINE</p><h1>Connection unavailable</h1><p>Reconnect before relying on operational data. LocalOps does not present cached business numbers as current.</p></section></main>; }

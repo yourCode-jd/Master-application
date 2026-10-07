@@ -1,2 +1,4 @@
-import { describe, expect, it } from "vitest";import { assertSameBusiness, scopedWhere } from "./tenant-scope";
+import { describe, expect, it } from "vitest";import { assertSameBusiness, scopedWhere, slotsOverlap, recommendedReturnDate } from "./tenant-scope";
 describe("tenant boundaries",()=>{it("always applies active business to a query",()=>expect(scopedWhere("business-a",{id:"customer-x"})).toEqual({id:"customer-x",businessId:"business-a"}));it("rejects cross-business access",()=>expect(()=>assertSameBusiness("business-a","business-b")).toThrow("Tenant boundary"));});
+it("detects overlapping staff bookings",()=>expect(slotsOverlap({startAt:new Date("2026-09-01T10:00:00Z"),endAt:new Date("2026-09-01T10:30:00Z")},{startAt:new Date("2026-09-01T10:15:00Z"),endAt:new Date("2026-09-01T10:45:00Z")})).toBe(true));
+it("calculates deterministic return dates across months",()=>expect(recommendedReturnDate(new Date("2026-09-01T12:00:00Z"),30).toISOString().slice(0,10)).toBe("2026-10-01"));
