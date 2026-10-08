@@ -1,61 +1,29 @@
-# LocalOps — Phase 1
+# LocalOps Salon
 
-A reusable local-business operating platform foundation. It deliberately contains no vertical workflows.
+LocalOps is a multi-tenant salon operations workspace for appointments, walk-ins, customers, visits, payments, follow-ups, inventory, memberships, packages, commissions, and reports.
 
-## Stack
+## Run locally
 
-Next.js App Router, React, TypeScript, PostgreSQL, Prisma, Tailwind CSS v4, and pnpm.
+Requirements: Node.js 20+, pnpm 10+, and the project dependencies installed with `pnpm install`.
 
-## Setup
+The repository includes an isolated PostgreSQL cluster in `.postgres-data` for local development. It listens only on `127.0.0.1:5433` and is started automatically by:
 
-1. Copy `.env.example` to `.env` and supply a local PostgreSQL `DATABASE_URL` plus a 32-character `SESSION_SECRET`.
-2. Run `pnpm install`.
-3. Run `pnpm db:generate`, then `pnpm db:migrate --name init`, then `pnpm db:seed`.
-4. Run `pnpm dev` and visit `http://localhost:3000`.
-
-Demo login: `owner@demo.local` / `DemoPass123!` (manager and staff accounts use the same password).
-
-## Commands
-
-`pnpm typecheck` · `pnpm test` · `pnpm build` · `pnpm db:seed`
-
-## Architecture
-
-- `src/app`: routes, layouts, and server actions
-- `src/components`: reusable UI primitives and shell
-- `src/domain`: business rules and validated write services
-- `src/lib`: DB, environment, authentication, tenancy, RBAC, audit helpers
-- `src/integrations`: provider contracts plus simulation adapters
-- `prisma`: schema and synthetic seed
-
-## Tenant and permission model
-
-Every tenant-owned model has `businessId`. Server-side services obtain an active authenticated tenant context and filter writes and reads by that business. Roles, permissions, and role assignments are database-backed; UI navigation is only a convenience, while domain services enforce permissions.
-
-## Phase 1 includes
-
-Authentication/session handling, multi-business schema, RBAC, responsive dark/light shell, customer CRUD, activity feed, task management, basic inventory movements, audit log, seed data, and foundation-rule tests.
-
-## Deferred Product Research
-
-The following are intentionally not designed: salon appointments, salon return prediction, commissions, cafe KOT/KDS, recipes, wastage intelligence, retail POS/GST, supplier intelligence, customer loyalty, AI assistant, WhatsApp automation, and advanced reporting.
-## Local PostgreSQL setup
-
-The committed example uses placeholders and will not authenticate until you create a dedicated local role and database. On a machine where you have PostgreSQL administrator access, run:
-
-```sql
-CREATE ROLE localops_user LOGIN PASSWORD 'choose-a-strong-local-password';
-CREATE DATABASE local_ops OWNER localops_user;
+```bash
+pnpm dev:local
 ```
 
-Then set `.env` (never commit it):
+Open `http://localhost:3000` and sign in with:
 
-```dotenv
-DATABASE_URL="postgresql://localops_user:choose-a-strong-local-password@localhost:5432/local_ops?schema=public"
-SESSION_SECRET="a-random-secret-with-at-least-32-characters"
+```text
+owner@demo.local
+DemoPass123!
 ```
 
-Apply the checked-in migration history and seed without resetting existing data:
+The seeded manager and staff users use the same password. Stop only the local database with `pnpm db:local:stop`.
+
+## Database and schema
+
+The application reads `DATABASE_URL` and `SESSION_SECRET` from `.env`. For an external PostgreSQL server, use a dedicated database and role; never reuse another application’s credentials.
 
 ```bash
 pnpm db:generate
@@ -63,12 +31,84 @@ pnpm prisma migrate deploy
 pnpm db:seed
 ```
 
-If the existing local PostgreSQL installation is administered by another user, obtain a dedicated role/database from that administrator rather than reusing or guessing another project’s credentials.
+`pnpm db:seed` supplies synthetic salon demo data. It is for development and test environments, not a live business database.
 
-## Current migration status
+## Quality and production checks
 
-`0001_phase1_foundation` contains the initial schema. `0002_phase2_operations` is currently empty and must be replaced with a safe incremental migration after a valid PostgreSQL connection is configured; do not use it as proof that Phase 2 was applied.
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+test -f .next/BUILD_ID
+pnpm start
+```
 
-### Included isolated development database
+The build is valid only when `pnpm build` exits with status `0` and `.next/BUILD_ID` exists. After `pnpm start`, verify:
 
-This workspace also has an isolated PostgreSQL cluster under `.postgres-data`, listening only on `127.0.0.1:5433`. It avoids reliance on the machine-wide PostgreSQL password. Use `pnpm db:local:start` before development, or `pnpm dev:local` to start the database and Next.js together. Use `pnpm db:local:stop` to stop it cleanly. Do not rename the project folder while the local database is running; if the folder is moved, run `pnpm db:local:start` again from its new location.
+```text
+/login
+/api/health
+/api/health/database
+```
+
+The database health endpoint returns only reachability status and does not expose credentials.
+
+## Product workflows
+
+- **Appointments:** create, schedule, reschedule, assign, transition, and complete salon bookings with conflict protection.
+- **Walk-ins:** queue, assign, serve, complete, or mark left.
+- **Visits and payments:** retain service/staff/price snapshots, record payments, apply permitted discounts, and correct records with audit history.
+- **Follow-ups:** act on return recommendations and membership/package attention from the existing task workflow.
+- **Inventory:** receive purchases, record consumption, adjustments, damage/returns, and low-stock signals.
+- **Memberships and packages:** purchase, renew, cancel, expire, apply membership benefits, and consume package credits without double charging.
+- **Finance:** view permitted revenue and commission information; corrections and settlements are auditable.
+
+## Roles and permissions
+
+Permissions are enforced in the server/domain layer. Navigation is a convenience only.
+
+- **Owner:** full salon operational, financial, settings, report, and override access.
+- **Manager:** only the daily operations and financial actions granted to their role.
+- **Staff:** a simplified daily workspace and only their permitted appointments, tasks, follow-ups, and self-information.
+
+All tenant-owned domain reads and writes are scoped to the active business. Never rely on a hidden button as an access-control measure.
+
+## PWA and offline behavior
+
+The manifest, install icons, service worker, and `/offline` fallback are included. The service worker only serves the offline fallback when navigation fails; it does not cache operational routes as current data.
+
+## Background alert worker
+
+Membership and package expiry/low-credit alerts are not created during dashboard rendering. Run the worker as a separately supervised process:
+
+```bash
+pnpm worker
+```
+
+For a one-time scheduled invocation (for example, from a platform scheduler), run:
+
+```bash
+pnpm worker:once
+```
+
+The scan is tenant scoped, respects notification preferences, and deduplicates unread alerts by recipient, type, title, and day.
+
+## Backup and restore
+
+Back up the PostgreSQL database and any uploaded files together. A safe PostgreSQL backup/restore flow is:
+
+```bash
+pg_dump "$DATABASE_URL" --format=custom --file=localops-backup.dump
+createdb localops_restore_test
+pg_restore --dbname=localops_restore_test --clean --if-exists localops-backup.dump
+```
+
+Perform restores only into a separate test database first. Do not restore over development or production data without an approved recovery plan and a current backup.
+
+## Deferred capabilities
+
+The project intentionally does not include AI assistance, real WhatsApp delivery, loyalty points, gift cards, payroll, advanced attendance, GST/accounting, online subscription autopay, a customer mobile app, cafe workflows, or retail workflows.
+
+## Pre-live checklist
+
+See [docs/PRE_LIVE_CHECKLIST.md](docs/PRE_LIVE_CHECKLIST.md) before a real salon pilot.

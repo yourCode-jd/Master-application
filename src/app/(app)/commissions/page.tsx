@@ -3,9 +3,10 @@ import { EmptyState } from "@/components/ui";
 import { requireSalon } from "@/domain/salon/service";
 import { db } from "@/lib/db";
 import { getTenantContext, requirePermission } from "@/lib/tenant";
+import { redirect } from "next/navigation";
 
 export default async function CommissionsPage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
-  const c = await getTenantContext(); await requireSalon(c); requirePermission(c, "commissions.view");
+  const c = await getTenantContext(); await requireSalon(c); if (!c.permissions.has("commissions.view")) redirect("/"); requirePermission(c, "commissions.view");
   const range = (await searchParams).range || "month";
   const now = new Date(); const start = new Date(now);
   if (range === "today") start.setHours(0, 0, 0, 0);

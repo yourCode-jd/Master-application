@@ -9,9 +9,9 @@ const glyphs: Record<string, string> = {
   Dashboard: "⌂", "My day": "☀", Customers: "◉", Activity: "↗", Staff: "♙", Inventory: "□", Tasks: "✓", Reports: "◫", Settings: "⚙", Appointments: "◷", "Walk-ins": "↳", Services: "✦", "Follow-ups": "↺", Payments: "₹",
 };
 
-export function SidebarNavigation({ links, mobile = false }: { links: readonly NavigationItem[]; mobile?: boolean }) {
+export function SidebarNavigation({ links, mobile = false, label = "Main navigation" }: { links: readonly NavigationItem[]; mobile?: boolean; label?: string }) {
   const pathname = usePathname();
-  return <nav className={mobile ? "sidebar-nav mobile-nav" : "sidebar-nav"} aria-label="Main navigation">
+  return <nav className={mobile ? "sidebar-nav mobile-nav" : "sidebar-nav"} aria-label={label}>
     {links.map(([href, label]) => {
       const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
       return <Link key={href} href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined}><span className="nav-glyph" aria-hidden="true">{glyphs[label] ?? "·"}</span><span>{label}</span></Link>;

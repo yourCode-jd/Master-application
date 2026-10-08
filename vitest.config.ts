@@ -10,5 +10,5 @@ if (existsSync(envPath)) for (const line of readFileSync(envPath, "utf8").split(
 
 export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
-  test: { testTimeout: 20_000, hookTimeout: 20_000, fileParallelism: false },
+  test: { testTimeout: 20_000, hookTimeout: 20_000, fileParallelism: false, exclude: ["**/node_modules/**", "tests/browser/**"] },
 });

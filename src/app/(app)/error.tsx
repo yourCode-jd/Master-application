@@ -1,1 +1,5 @@
-"use client";export default function Error(){return <div className="card empty"><strong>Something went wrong</strong><p>Refresh the page or try again shortly.</p></div>}
+"use client";
+
+export default function Error({ reset }: { reset: () => void }) {
+  return <div className="card empty" role="alert"><strong>We couldn&apos;t load this page</strong><p>Try again. If the problem continues, return to the dashboard and contact the salon owner.</p><button className="btn secondary" onClick={reset}>Try again</button></div>;
+}
