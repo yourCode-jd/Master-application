@@ -228,6 +228,7 @@ model User {
   name                    String
   email                   String                   @unique
   passwordHash            String
+  sessionVersion          Int                      @default(0)
   active                  Boolean                  @default(true)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -243,6 +244,7 @@ model User {
   commissionAdjustments   CommissionAdjustment[]   @relation("CommissionAdjustmentCreator")
   commissionSettlements   CommissionSettlement[]   @relation("CommissionSettlementCreator")
   correctedPayments       TransactionRecord[]      @relation("PaymentCorrectedBy")
+  passwordResetTokens     PasswordResetToken[]
 }
 
 model StaffMember {
@@ -617,6 +619,18 @@ model AuthRateLimit {
   windowStarted DateTime
   blockedUntil  DateTime?
   updatedAt     DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model MembershipPlan {

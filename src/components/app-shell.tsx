@@ -3,7 +3,9 @@ import { logoutAction } from "@/app/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarNavigation, type NavigationItem } from "@/components/sidebar-navigation";
 import { MobileNavigation } from "@/components/mobile-navigation";
+import { SidebarScroll } from "@/components/sidebar-scroll";
 import type { TenantContext } from "@/lib/tenant";
+import { LogOut } from "lucide-react";
 
 type NavigationSection = { label: string; links: readonly NavigationItem[] };
 const salonSections: readonly NavigationSection[] = [
@@ -31,5 +33,5 @@ function Navigation({ sections, mobile = false }: { sections: ReturnType<typeof 
 export function AppShell({ children, context, businessName, businessType }: { children: React.ReactNode; context: TenantContext; businessName: string; businessType: string }) {
   const sections = visibleSections(context, businessType);
   const mobileSignOut = <form action={logoutAction}><button>Sign out</button></form>;
-  return <div className="shell"><aside className="sidebar"><div className="sidebar-top"><Link className="brand" href="/"><span className="brand-mark">L</span><span>LocalOps</span></Link><div className="business-switcher"><span className="business-orb">{businessName.slice(0, 1)}</span><span><small>{businessType === "SALON" ? "SALON WORKSPACE" : "WORKSPACE"}</small><strong>{businessName}</strong></span></div></div><Navigation sections={sections} /><div className="sidebar-footer"><form action={logoutAction}><button className="signout"><span aria-hidden="true">↪</span> Sign out</button></form></div></aside><main><header className="header"><MobileNavigation signOut={mobileSignOut}><Navigation sections={sections} mobile /></MobileNavigation><span className="header-title">{businessType === "SALON" ? "Salon workspace" : "Operations workspace"}</span><ThemeToggle /></header><div className="content">{children}</div></main></div>;
+  return <div className="shell"><aside className="sidebar"><div className="sidebar-top"><Link className="brand" href="/"><span className="brand-mark">L</span><span>LocalOps</span></Link><div className="business-switcher"><span className="business-orb">{businessName.slice(0, 1)}</span><span><small>{businessType === "SALON" ? "SALON WORKSPACE" : "WORKSPACE"}</small><strong>{businessName}</strong></span></div></div><SidebarScroll><Navigation sections={sections} /></SidebarScroll><div className="sidebar-footer"><form action={logoutAction}><button className="signout"><LogOut aria-hidden="true"/> Sign out</button></form></div></aside><main><header className="header"><MobileNavigation signOut={mobileSignOut}><Navigation sections={sections} mobile /></MobileNavigation><span className="header-title">{businessType === "SALON" ? "Salon workspace" : "Operations workspace"}</span><ThemeToggle /></header><div className="content">{children}</div></main></div>;
 }

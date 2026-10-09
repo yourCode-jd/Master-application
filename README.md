@@ -95,15 +95,20 @@ The scan is tenant scoped, respects notification preferences, and deduplicates u
 
 ## Backup and restore
 
-Back up the PostgreSQL database and any uploaded files together. A safe PostgreSQL backup/restore flow is:
+Private uploads live in `uploads-private` by default (override with an absolute `UPLOAD_STORAGE_DIR`). Back up the database and uploads together:
 
 ```bash
-pg_dump "$DATABASE_URL" --format=custom --file=localops-backup.dump
+pnpm backup -- /absolute/path/to/backup-directory
 createdb localops_restore_test
-pg_restore --dbname=localops_restore_test --clean --if-exists localops-backup.dump
+pg_restore --dbname=postgresql://.../localops_restore_test --clean --if-exists /absolute/path/to/backup-directory/database.dump
+pnpm restore:uploads -- /absolute/path/to/backup-directory /absolute/path/to/empty-restore-directory
 ```
 
-Perform restores only into a separate test database first. Do not restore over development or production data without an approved recovery plan and a current backup.
+The upload archive preserves relative paths and has a SHA-256 manifest. Restore rejects traversal paths and non-empty targets unless `--overwrite` is supplied. Perform restores only into separate test database and storage targets first; never restore over active production storage without an approved recovery plan.
+
+## Password reset
+
+`/forgot-password` always returns the same response for every email address. Requests are rate-limited (five per email/address per 15 minutes); reset tokens are random, stored only as hashes, expire after one hour, and can be used once. Successful reset revokes existing signed sessions. Configure a real email provider before production. Without one, the simulated delivery exposes a reset link only in non-production development UI.
 
 ## Deferred capabilities
 

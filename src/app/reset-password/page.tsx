@@ -1,0 +1,4 @@
+"use client";
+import { useActionState } from "react";
+import { resetPasswordAction } from "@/app/actions";
+export default function ResetPassword({searchParams}:{searchParams:Promise<{token?:string}>}){const [state,action,pending]=useActionState(resetPasswordAction,{});const token=new URLSearchParams(typeof window==="undefined"?"":window.location.search).get("token")||"";return <main className="login"><form action={action} className="login-card"><p className="eyebrow">ACCOUNT ACCESS</p><h1>Choose a new password</h1><p>Use at least 10 characters with a letter and a number.</p><input type="hidden" name="token" value={token}/><label>New password<input name="password" type="password" autoComplete="new-password" minLength={10} required/></label>{state.error&&<p className="error" role="alert">{state.error}</p>}<button className="btn" disabled={pending}>{pending?"Saving…":"Reset password"}</button></form></main>}

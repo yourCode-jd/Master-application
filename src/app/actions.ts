@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { clearSession, authenticate, setSession } from "@/lib/auth";
 import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from "@/lib/auth-rate-limit";
+import { requestPasswordReset, resetPassword } from "@/lib/password-reset";
+import { headers } from "next/headers";
 import { getTenantContext } from "@/lib/tenant";
 import { createCustomer, updateCustomer } from "@/domain/customers/service";
 import { db } from "@/lib/db";
@@ -34,6 +36,8 @@ export async function loginAction(_: {error?:string}, form:FormData) {
   redirect("/");
 }
 export async function logoutAction() { await clearSession(); redirect("/login"); }
+export async function forgotPasswordAction(_: {message?:string;devLink?:string},form:FormData):Promise<{message?:string;devLink?:string}> { const message="If that email belongs to an active account, reset instructions have been sent."; try { const h=await headers(),proto=process.env.TRUST_PROXY==="true"?h.get("x-forwarded-proto")||"https":"http",host=h.get("host")||"localhost:3000"; const devLink=await requestPasswordReset(value(form,"email"),`${proto}://${host}`); return {message,...(process.env.NODE_ENV!=="production"&&devLink?{devLink}:{})}; } catch { return {message}; } }
+export async function resetPasswordAction(_: {error?:string},form:FormData):Promise<{error?:string}> { try { await resetPassword(value(form,"token"),value(form,"password")); redirect("/login?reset=1"); } catch(error) { return {error:error instanceof Error?error.message:"Unable to reset password."}; } }
 export async function createCustomerAction(form:FormData) { const context=await getTenantContext(); await createCustomer(context,{name:value(form,"name"),phone:value(form,"phone"),email:value(form,"email"),notes:value(form,"notes")}); revalidatePath("/customers"); redirect("/customers"); }
 export async function updateCustomerAction(id:string,form:FormData) { const context=await getTenantContext(); await updateCustomer(context,id,{name:value(form,"name"),phone:value(form,"phone"),email:value(form,"email"),notes:value(form,"notes")}); revalidatePath(`/customers/${id}`); revalidatePath("/customers"); redirect(`/customers/${id}`); }
 export async function createTaskAction(form:FormData) { const context=await getTenantContext(); await createTask(context,{title:value(form,"title"),description:value(form,"description"),priority:value(form,"priority"),dueAt:value(form,"dueAt"),assignedStaffId:value(form,"assignedStaffId"),customerId:value(form,"customerId")}); revalidatePath("/tasks"); }

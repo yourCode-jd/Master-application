@@ -1,0 +1,4 @@
+"use client";
+import { useActionState } from "react";
+import { forgotPasswordAction } from "@/app/actions";
+export default function ForgotPassword(){const [state,action,pending]=useActionState(forgotPasswordAction,{});return <main className="login"><form action={action} className="login-card"><p className="eyebrow">ACCOUNT ACCESS</p><h1>Reset password</h1><p>Enter your email and we&apos;ll send reset instructions if an active account matches it.</p><label>Email<input name="email" type="email" autoComplete="email" required/></label>{state.message&&<p role="status">{state.message}</p>}{state.devLink&&<p className="muted">Development reset link: <a href={state.devLink}>Open reset page</a></p>}<button className="btn" disabled={pending}>{pending?"Sending…":"Send reset instructions"}</button><a className="text-button" href="/login">Back to sign in</a></form></main>}

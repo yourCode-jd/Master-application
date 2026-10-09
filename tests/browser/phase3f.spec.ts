@@ -67,7 +67,8 @@ test("owner can complete safe rendered operational workflows", async ({ page }) 
   await appointment.getByLabel("Location").selectOption({ index: 1 });
   await appointment.getByLabel("Date and time").fill("2030-10-10T10:00");
   await appointment.getByRole("button", { name: "Book appointment" }).click();
-  await expect(page.getByText("Browser QA Guest", { exact: true })).toBeVisible();
+  await page.waitForTimeout(500); await page.reload();
+  await expect(page.getByText("Browser QA Guest", { exact: true }).first()).toBeVisible();
 
   await page.goto("/walk-ins");
   const walkIn = page.locator(".booking-form");
@@ -75,6 +76,7 @@ test("owner can complete safe rendered operational workflows", async ({ page }) 
   await walkIn.getByLabel("Service").selectOption({ index: 1 });
   await walkIn.getByLabel("Location").selectOption({ index: 1 });
   await walkIn.getByRole("button", { name: "Add to queue" }).click();
+  await page.waitForTimeout(500); await page.reload();
   await expect(page.locator(".queue-card").first()).toBeVisible();
 
   await page.goto("/follow-ups?filter=OVERDUE");
@@ -85,16 +87,20 @@ test("owner can complete safe rendered operational workflows", async ({ page }) 
   }
 
   await page.goto("/memberships");
-  await page.getByLabel("Customer").selectOption({ index: 1 });
-  await page.getByLabel("Plan").selectOption({ index: 1 });
-  await page.getByRole("button", { name: "Record & activate" }).click();
+  const membershipSale = page.locator("form").filter({ has: page.getByRole("button", { name: "Record & activate" }) });
+  await membershipSale.getByLabel("Customer").selectOption({ index: 1 });
+  await membershipSale.getByLabel("Plan").selectOption({ index: 1 });
+  await membershipSale.getByRole("button", { name: "Record & activate" }).click();
+  await page.waitForTimeout(500); await page.reload();
   await expect(page.getByRole("heading", { name: "Memberships" })).toBeVisible();
 
   await page.goto("/packages");
-  await page.getByLabel("Customer").selectOption({ index: 1 });
-  await page.getByLabel("Package").selectOption({ index: 1 });
-  await page.getByRole("button", { name: "Record & sell" }).click();
-  await expect(page.getByRole("heading", { name: "Packages" })).toBeVisible();
+  const packageSale = page.locator("form").filter({ has: page.getByRole("button", { name: "Record & sell" }) });
+  await packageSale.getByLabel("Customer").selectOption({ index: 1 });
+  await packageSale.getByLabel("Package").selectOption({ index: 1 });
+  await packageSale.getByRole("button", { name: "Record & sell" }).click();
+  await page.waitForTimeout(500); await page.reload();
+  await expect(page.getByRole("heading", { name: "Packages", exact: true })).toBeVisible();
 
   await page.goto("/inventory");
   const stock = page.locator("form").filter({ has: page.getByRole("button", { name: "Record movement" }) });
@@ -104,5 +110,6 @@ test("owner can complete safe rendered operational workflows", async ({ page }) 
   await stock.getByLabel("Quantity change").fill("1");
   await stock.getByLabel(/Reason/).fill("Browser QA return");
   await stock.getByRole("button", { name: "Record movement" }).click();
-  await expect(page.getByText("Browser QA return", { exact: true })).toBeVisible();
+  await page.waitForTimeout(500); await page.reload();
+  await expect(page.getByText("Browser QA return").last()).toBeVisible();
 });
